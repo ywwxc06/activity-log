@@ -43,3 +43,4 @@ jobs:
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           gh release create "$TAG" build.zip --notes "$NOTE"
+          

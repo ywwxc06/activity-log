@@ -10,7 +10,7 @@
 	},
 	"scripts": {
 		"watch": "ncc build src/index.js --watch --license licenses.txt",
-		"build": "npx ncc build src/index.js --license licenses.txt",
+		"build": "bun x @vercel/ncc build src/index.js --license licenses.txt",
 		"lint:commit": "commitlint --last --verbose"
 	},
 	"devDependencies": {

@@ -50,8 +50,8 @@ jobs:
       - id: generate-notes
         name: Generate AI Release Summary
         run: |
-          # 模擬 AI 代理根據最近 Commit 產出摘要
-          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          # 取得最新 Commit 訊息並去除換行符號，避免輸出格式錯誤
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
           SUMMARY="[AI Agent Summary] Automated release generated for latest commit: $LAST_COMMIT_MSG"
           echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
           echo "Generated Summary: $SUMMARY"

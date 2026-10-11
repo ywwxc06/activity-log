@@ -11,15 +11,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 【修正這裡】改用 Node.js 環境與 npm 進行安裝與建置
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
+     # 1. 設定 Bun 環境
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      # 2. 執行倉庫內建的 build 腳本
       - name: Build
         run: |
-          npm install
+          bun install
           npm run build
           zip -r build.zip .
 

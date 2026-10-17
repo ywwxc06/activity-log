@@ -1,4 +1,4 @@
-name: Build-Test-Release
+name: Advanced-Multi-Environment-Pipeline
 
 on:
   push:
@@ -10,12 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-          
       - name: Build
         run: |
           npm install
@@ -25,36 +23,66 @@ jobs:
           name: build-artifact
           path: dist/
 
-  test:
-    runs-on: ubuntu-latest
+  test-unit:
     needs: build
+    runs-on: ubuntu-latest
+    env:
+      TEST_ENV: staging
     steps:
       - uses: actions/checkout@v4
       - run: npm install
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-          path: dist/
-      - name: Run Automated Tests
+      - name: Run Unit Tests
         run: |
-          echo "Running automated tests..."
-          npm test || (echo "❌ Tests failed" && exit 1)
+          echo "Running unit tests for environment: $TEST_ENV"
+          npm test
 
-  release:
+  test-integration:
+    needs: test-unit
     runs-on: ubuntu-latest
-    needs: test
-    environment: dev
+    env:
+      TEST_ENV: staging
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install
+      - name: Run Integration Tests
+        run: |
+          echo "Running integration tests for environment: $TEST_ENV"
+          npm test
+
+  deploy-staging:
+    needs: test-integration
+    runs-on: ubuntu-latest
+    environment: staging
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: build-artifact
           path: dist/
-      - name: Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
+      - name: Release to Staging
         run: |
-          echo "✅ Tests passed. Releasing new dev build..."
-          gh release create "dev-$(date +%s)" dist/* --notes "Automated release after successful tests"
+          echo "✅ All tests passed. Deploying to Staging..."
+          gh release create "staging-$(date +%s)" dist/* --notes "Automated Staging release"
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production            # 此處需要設定手動審核保護
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: dist/
+      - name: Release to Production
+        run: |
+          echo "✅ Approved. Deploying to Production..."
+          gh release create "prod-$(date +%s)" dist/* --notes "Production release after manual review"
